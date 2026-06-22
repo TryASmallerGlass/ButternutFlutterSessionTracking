@@ -21,6 +21,7 @@ class SessionMuscleGroups extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get sessionId => integer()();
   TextColumn get muscleGroup => text()();
+  IntColumn get hitCount => integer().withDefault(const Constant(1))();
 }
 
 @DriftDatabase(tables: [Sessions, SessionMuscleGroups])
@@ -43,26 +44,30 @@ class AppDatabase extends _$AppDatabase {
   Future<int> insertSession(SessionsCompanion session) =>
       into(sessions).insert(session);
 
-  Future<void> insertMuscleGroups(int sessionId, List<MuscleGroup> groups) {
+  Future<void> insertMuscleGroups(
+      int sessionId, Map<MuscleGroup, int> groupCounts) {
+    final entries = groupCounts.entries.where((e) => e.value > 0);
     return batch((batch) {
       batch.insertAll(
         sessionMuscleGroups,
-        groups
-            .map((g) => SessionMuscleGroupsCompanion.insert(
+        entries
+            .map((e) => SessionMuscleGroupsCompanion.insert(
                   sessionId: sessionId,
-                  muscleGroup: g.name,
+                  muscleGroup: e.key.name,
+                  hitCount: Value(e.value),
                 ))
             .toList(),
       );
     });
   }
 
-  Future<void> updateSession(Session session, List<MuscleGroup> groups) async {
+  Future<void> updateSession(
+      Session session, Map<MuscleGroup, int> groupCounts) async {
     await update(sessions).replace(session);
     await (delete(sessionMuscleGroups)
           ..where((g) => g.sessionId.equals(session.id)))
         .go();
-    await insertMuscleGroups(session.id, groups);
+    await insertMuscleGroups(session.id, groupCounts);
   }
 
   Future<void> deleteSession(int sessionId) async {

@@ -8,13 +8,13 @@ import '../widgets/muscle_group_selector.dart';
 class SessionFormScreen extends StatefulWidget {
   final AppDatabase database;
   final Session? existingSession;
-  final Set<MuscleGroup> existingGroups;
+  final Map<MuscleGroup, int> existingGroupCounts;
 
   const SessionFormScreen({
     super.key,
     required this.database,
     this.existingSession,
-    this.existingGroups = const {},
+    this.existingGroupCounts = const {},
   });
 
   @override
@@ -23,7 +23,7 @@ class SessionFormScreen extends StatefulWidget {
 
 class _SessionFormScreenState extends State<SessionFormScreen> {
   late DateTime _dateTime;
-  late Set<MuscleGroup> _selectedGroups;
+  late Map<MuscleGroup, int> _groupCounts;
   late TextEditingController _commentController;
   bool _cvEnabled = false;
   int? _cvDuration;
@@ -36,7 +36,7 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
     super.initState();
     final session = widget.existingSession;
     _dateTime = session?.sessionDateTime ?? DateTime.now();
-    _selectedGroups = Set<MuscleGroup>.from(widget.existingGroups);
+    _groupCounts = Map<MuscleGroup, int>.from(widget.existingGroupCounts);
     _commentController = TextEditingController(text: session?.comment ?? '');
     _cvEnabled = session?.cvDurationMinutes != null || session?.cvLevel != null;
     _cvDuration = session?.cvDurationMinutes;
@@ -74,14 +74,13 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
   }
 
   Future<void> _save() async {
-    if (_selectedGroups.isEmpty) {
+    final hasAnyHits = _groupCounts.values.any((count) => count > 0);
+    if (!hasAnyHits) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one muscle group')),
+        const SnackBar(content: Text('Record at least one muscle group hit')),
       );
       return;
     }
-
-    final groups = _selectedGroups.toList();
 
     if (_isEditing) {
       final updated = widget.existingSession!.copyWith(
@@ -90,7 +89,7 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
         cvLevel: Value(_cvEnabled ? _cvLevel : null),
         comment: _commentController.text,
       );
-      await widget.database.updateSession(updated, groups);
+      await widget.database.updateSession(updated, _groupCounts);
     } else {
       final id = await widget.database.insertSession(
         SessionsCompanion.insert(
@@ -100,7 +99,7 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
           comment: _commentController.text,
         ),
       );
-      await widget.database.insertMuscleGroups(id, groups);
+      await widget.database.insertMuscleGroups(id, _groupCounts);
     }
 
     if (mounted) Navigator.of(context).pop();
@@ -129,8 +128,8 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
           const Text('Muscle groups hit', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           MuscleGroupSelector(
-            selected: _selectedGroups,
-            onChanged: (value) => setState(() => _selectedGroups = value),
+            counts: _groupCounts,
+            onChanged: (value) => setState(() => _groupCounts = value),
           ),
           const SizedBox(height: 16),
           CvInput(

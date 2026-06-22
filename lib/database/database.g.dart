@@ -411,8 +411,20 @@ class $SessionMuscleGroupsTable extends SessionMuscleGroups
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _hitCountMeta = const VerificationMeta(
+    'hitCount',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, sessionId, muscleGroup];
+  late final GeneratedColumn<int> hitCount = GeneratedColumn<int>(
+    'hit_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, sessionId, muscleGroup, hitCount];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -447,6 +459,12 @@ class $SessionMuscleGroupsTable extends SessionMuscleGroups
     } else if (isInserting) {
       context.missing(_muscleGroupMeta);
     }
+    if (data.containsKey('hit_count')) {
+      context.handle(
+        _hitCountMeta,
+        hitCount.isAcceptableOrUnknown(data['hit_count']!, _hitCountMeta),
+      );
+    }
     return context;
   }
 
@@ -468,6 +486,10 @@ class $SessionMuscleGroupsTable extends SessionMuscleGroups
         DriftSqlType.string,
         data['${effectivePrefix}muscle_group'],
       )!,
+      hitCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hit_count'],
+      )!,
     );
   }
 
@@ -482,10 +504,12 @@ class SessionMuscleGroup extends DataClass
   final int id;
   final int sessionId;
   final String muscleGroup;
+  final int hitCount;
   const SessionMuscleGroup({
     required this.id,
     required this.sessionId,
     required this.muscleGroup,
+    required this.hitCount,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -493,6 +517,7 @@ class SessionMuscleGroup extends DataClass
     map['id'] = Variable<int>(id);
     map['session_id'] = Variable<int>(sessionId);
     map['muscle_group'] = Variable<String>(muscleGroup);
+    map['hit_count'] = Variable<int>(hitCount);
     return map;
   }
 
@@ -501,6 +526,7 @@ class SessionMuscleGroup extends DataClass
       id: Value(id),
       sessionId: Value(sessionId),
       muscleGroup: Value(muscleGroup),
+      hitCount: Value(hitCount),
     );
   }
 
@@ -513,6 +539,7 @@ class SessionMuscleGroup extends DataClass
       id: serializer.fromJson<int>(json['id']),
       sessionId: serializer.fromJson<int>(json['sessionId']),
       muscleGroup: serializer.fromJson<String>(json['muscleGroup']),
+      hitCount: serializer.fromJson<int>(json['hitCount']),
     );
   }
   @override
@@ -522,15 +549,21 @@ class SessionMuscleGroup extends DataClass
       'id': serializer.toJson<int>(id),
       'sessionId': serializer.toJson<int>(sessionId),
       'muscleGroup': serializer.toJson<String>(muscleGroup),
+      'hitCount': serializer.toJson<int>(hitCount),
     };
   }
 
-  SessionMuscleGroup copyWith({int? id, int? sessionId, String? muscleGroup}) =>
-      SessionMuscleGroup(
-        id: id ?? this.id,
-        sessionId: sessionId ?? this.sessionId,
-        muscleGroup: muscleGroup ?? this.muscleGroup,
-      );
+  SessionMuscleGroup copyWith({
+    int? id,
+    int? sessionId,
+    String? muscleGroup,
+    int? hitCount,
+  }) => SessionMuscleGroup(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    muscleGroup: muscleGroup ?? this.muscleGroup,
+    hitCount: hitCount ?? this.hitCount,
+  );
   SessionMuscleGroup copyWithCompanion(SessionMuscleGroupsCompanion data) {
     return SessionMuscleGroup(
       id: data.id.present ? data.id.value : this.id,
@@ -538,6 +571,7 @@ class SessionMuscleGroup extends DataClass
       muscleGroup: data.muscleGroup.present
           ? data.muscleGroup.value
           : this.muscleGroup,
+      hitCount: data.hitCount.present ? data.hitCount.value : this.hitCount,
     );
   }
 
@@ -546,46 +580,53 @@ class SessionMuscleGroup extends DataClass
     return (StringBuffer('SessionMuscleGroup(')
           ..write('id: $id, ')
           ..write('sessionId: $sessionId, ')
-          ..write('muscleGroup: $muscleGroup')
+          ..write('muscleGroup: $muscleGroup, ')
+          ..write('hitCount: $hitCount')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, sessionId, muscleGroup);
+  int get hashCode => Object.hash(id, sessionId, muscleGroup, hitCount);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SessionMuscleGroup &&
           other.id == this.id &&
           other.sessionId == this.sessionId &&
-          other.muscleGroup == this.muscleGroup);
+          other.muscleGroup == this.muscleGroup &&
+          other.hitCount == this.hitCount);
 }
 
 class SessionMuscleGroupsCompanion extends UpdateCompanion<SessionMuscleGroup> {
   final Value<int> id;
   final Value<int> sessionId;
   final Value<String> muscleGroup;
+  final Value<int> hitCount;
   const SessionMuscleGroupsCompanion({
     this.id = const Value.absent(),
     this.sessionId = const Value.absent(),
     this.muscleGroup = const Value.absent(),
+    this.hitCount = const Value.absent(),
   });
   SessionMuscleGroupsCompanion.insert({
     this.id = const Value.absent(),
     required int sessionId,
     required String muscleGroup,
+    this.hitCount = const Value.absent(),
   }) : sessionId = Value(sessionId),
        muscleGroup = Value(muscleGroup);
   static Insertable<SessionMuscleGroup> custom({
     Expression<int>? id,
     Expression<int>? sessionId,
     Expression<String>? muscleGroup,
+    Expression<int>? hitCount,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (sessionId != null) 'session_id': sessionId,
       if (muscleGroup != null) 'muscle_group': muscleGroup,
+      if (hitCount != null) 'hit_count': hitCount,
     });
   }
 
@@ -593,11 +634,13 @@ class SessionMuscleGroupsCompanion extends UpdateCompanion<SessionMuscleGroup> {
     Value<int>? id,
     Value<int>? sessionId,
     Value<String>? muscleGroup,
+    Value<int>? hitCount,
   }) {
     return SessionMuscleGroupsCompanion(
       id: id ?? this.id,
       sessionId: sessionId ?? this.sessionId,
       muscleGroup: muscleGroup ?? this.muscleGroup,
+      hitCount: hitCount ?? this.hitCount,
     );
   }
 
@@ -613,6 +656,9 @@ class SessionMuscleGroupsCompanion extends UpdateCompanion<SessionMuscleGroup> {
     if (muscleGroup.present) {
       map['muscle_group'] = Variable<String>(muscleGroup.value);
     }
+    if (hitCount.present) {
+      map['hit_count'] = Variable<int>(hitCount.value);
+    }
     return map;
   }
 
@@ -621,7 +667,8 @@ class SessionMuscleGroupsCompanion extends UpdateCompanion<SessionMuscleGroup> {
     return (StringBuffer('SessionMuscleGroupsCompanion(')
           ..write('id: $id, ')
           ..write('sessionId: $sessionId, ')
-          ..write('muscleGroup: $muscleGroup')
+          ..write('muscleGroup: $muscleGroup, ')
+          ..write('hitCount: $hitCount')
           ..write(')'))
         .toString();
   }
@@ -840,12 +887,14 @@ typedef $$SessionMuscleGroupsTableCreateCompanionBuilder =
       Value<int> id,
       required int sessionId,
       required String muscleGroup,
+      Value<int> hitCount,
     });
 typedef $$SessionMuscleGroupsTableUpdateCompanionBuilder =
     SessionMuscleGroupsCompanion Function({
       Value<int> id,
       Value<int> sessionId,
       Value<String> muscleGroup,
+      Value<int> hitCount,
     });
 
 class $$SessionMuscleGroupsTableFilterComposer
@@ -869,6 +918,11 @@ class $$SessionMuscleGroupsTableFilterComposer
 
   ColumnFilters<String> get muscleGroup => $composableBuilder(
     column: $table.muscleGroup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hitCount => $composableBuilder(
+    column: $table.hitCount,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -896,6 +950,11 @@ class $$SessionMuscleGroupsTableOrderingComposer
     column: $table.muscleGroup,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get hitCount => $composableBuilder(
+    column: $table.hitCount,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SessionMuscleGroupsTableAnnotationComposer
@@ -917,6 +976,9 @@ class $$SessionMuscleGroupsTableAnnotationComposer
     column: $table.muscleGroup,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get hitCount =>
+      $composableBuilder(column: $table.hitCount, builder: (column) => column);
 }
 
 class $$SessionMuscleGroupsTableTableManager
@@ -965,20 +1027,24 @@ class $$SessionMuscleGroupsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> sessionId = const Value.absent(),
                 Value<String> muscleGroup = const Value.absent(),
+                Value<int> hitCount = const Value.absent(),
               }) => SessionMuscleGroupsCompanion(
                 id: id,
                 sessionId: sessionId,
                 muscleGroup: muscleGroup,
+                hitCount: hitCount,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required int sessionId,
                 required String muscleGroup,
+                Value<int> hitCount = const Value.absent(),
               }) => SessionMuscleGroupsCompanion.insert(
                 id: id,
                 sessionId: sessionId,
                 muscleGroup: muscleGroup,
+                hitCount: hitCount,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

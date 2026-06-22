@@ -70,10 +70,12 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                   builder: (context) => SessionFormScreen(
                     database: widget.database,
                     existingSession: session,
-                    existingGroups: groups
-                        .map((g) => MuscleGroup.values
-                            .firstWhere((m) => m.name == g.muscleGroup))
-                        .toSet(),
+                    existingGroupCounts: {
+                      for (final g in groups)
+                        MuscleGroup.values
+                                .firstWhere((m) => m.name == g.muscleGroup):
+                            g.hitCount,
+                    },
                   ),
                 ),
               );
@@ -99,7 +101,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
               Wrap(
                 spacing: 8,
                 children: groups
-                    .map((g) => Chip(label: Text(g.muscleGroup)))
+                    .map((g) => Chip(label: Text('${g.muscleGroup} x${g.hitCount}')))
                     .toList(),
               ),
               const SizedBox(height: 16),
