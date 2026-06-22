@@ -77,7 +77,13 @@ class _SessionListScreenState extends State<SessionListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Workout Sessions')),
+      appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Image.asset('assets/icon/source_logo.png'),
+        ),
+        title: const Text('Workout Sessions'),
+      ),
       body: Column(
         children: [
           DashboardSummary(
