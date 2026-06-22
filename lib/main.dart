@@ -27,7 +27,12 @@ class _MuscleTrackerAppState extends State<MuscleTrackerApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Muscle Group Tracker',
-      theme: ThemeData(colorSchemeSeed: Colors.deepOrange, useMaterial3: true),
+      theme: ThemeData(
+        colorSchemeSeed: Colors.deepOrange,
+        brightness: Brightness.dark,
+        useMaterial3: true,
+      ),
+      themeMode: ThemeMode.dark,
       home: SessionListScreen(database: _database),
     );
   }

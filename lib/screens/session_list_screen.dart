@@ -48,6 +48,29 @@ class _SessionListScreenState extends State<SessionListScreen> {
     setState(_refresh);
   }
 
+  Future<bool> _confirmDelete(Session session) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete session?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return false;
+    await widget.database.deleteSession(session.id);
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,11 +91,29 @@ class _SessionListScreenState extends State<SessionListScreen> {
               final session = sessions[index];
               final dateLabel =
                   DateFormat('EEE d MMM yyyy, HH:mm').format(session.sessionDateTime);
-              return ListTile(
-                title: Text(dateLabel),
-                subtitle: session.comment.isNotEmpty ? Text(session.comment) : null,
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _openDetail(session),
+              return Dismissible(
+                key: ValueKey(session.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Theme.of(context).colorScheme.error,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                confirmDismiss: (_) => _confirmDelete(session),
+                onDismissed: (_) => setState(_refresh),
+                child: ListTile(
+                  title: Text(dateLabel),
+                  subtitle:
+                      session.comment.isNotEmpty ? Text(session.comment) : null,
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () async {
+                      if (await _confirmDelete(session)) setState(_refresh);
+                    },
+                  ),
+                  onTap: () => _openDetail(session),
+                ),
               );
             },
           );
