@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../database/database.dart';
+import '../widgets/dashboard_summary.dart';
 import 'session_detail_screen.dart';
 import 'session_form_screen.dart';
 
@@ -16,6 +17,7 @@ class SessionListScreen extends StatefulWidget {
 
 class _SessionListScreenState extends State<SessionListScreen> {
   late Future<List<Session>> _sessionsFuture;
+  int _dashboardRefreshToken = 0;
 
   @override
   void initState() {
@@ -25,6 +27,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
 
   void _refresh() {
     _sessionsFuture = widget.database.allSessions();
+    _dashboardRefreshToken++;
   }
 
   Future<void> _openForm() async {
@@ -75,49 +78,63 @@ class _SessionListScreenState extends State<SessionListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Workout Sessions')),
-      body: FutureBuilder<List<Session>>(
-        future: _sessionsFuture,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final sessions = snapshot.data!;
-          if (sessions.isEmpty) {
-            return const Center(child: Text('No sessions yet. Tap + to add one.'));
-          }
-          return ListView.builder(
-            itemCount: sessions.length,
-            itemBuilder: (context, index) {
-              final session = sessions[index];
-              final dateLabel =
-                  DateFormat('EEE d MMM yyyy, HH:mm').format(session.sessionDateTime);
-              return Dismissible(
-                key: ValueKey(session.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  color: Theme.of(context).colorScheme.error,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                confirmDismiss: (_) => _confirmDelete(session),
-                onDismissed: (_) => setState(_refresh),
-                child: ListTile(
-                  title: Text(dateLabel),
-                  subtitle:
-                      session.comment.isNotEmpty ? Text(session.comment) : null,
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () async {
-                      if (await _confirmDelete(session)) setState(_refresh);
-                    },
-                  ),
-                  onTap: () => _openDetail(session),
-                ),
-              );
-            },
-          );
-        },
+      body: Column(
+        children: [
+          DashboardSummary(
+            database: widget.database,
+            refreshToken: _dashboardRefreshToken,
+          ),
+          Expanded(
+            child: FutureBuilder<List<Session>>(
+              future: _sessionsFuture,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final sessions = snapshot.data!;
+                if (sessions.isEmpty) {
+                  return const Center(
+                      child: Text('No sessions yet. Tap + to add one.'));
+                }
+                return ListView.builder(
+                  itemCount: sessions.length,
+                  itemBuilder: (context, index) {
+                    final session = sessions[index];
+                    final dateLabel = DateFormat('EEE d MMM yyyy, HH:mm')
+                        .format(session.sessionDateTime);
+                    return Dismissible(
+                      key: ValueKey(session.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        color: Theme.of(context).colorScheme.error,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (_) => _confirmDelete(session),
+                      onDismissed: (_) => setState(_refresh),
+                      child: ListTile(
+                        title: Text(dateLabel),
+                        subtitle: session.comment.isNotEmpty
+                            ? Text(session.comment)
+                            : null,
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () async {
+                            if (await _confirmDelete(session)) {
+                              setState(_refresh);
+                            }
+                          },
+                        ),
+                        onTap: () => _openDetail(session),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openForm,

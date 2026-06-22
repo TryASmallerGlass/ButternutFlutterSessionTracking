@@ -41,6 +41,17 @@ class AppDatabase extends _$AppDatabase {
             ..where((g) => g.sessionId.equals(sessionId)))
           .get();
 
+  Future<List<Session>> sessionsSince(DateTime from) =>
+      (select(sessions)..where((s) => s.sessionDateTime.isBiggerOrEqualValue(from)))
+          .get();
+
+  Future<List<SessionMuscleGroup>> groupsForSessionIds(List<int> sessionIds) {
+    if (sessionIds.isEmpty) return Future.value(const []);
+    return (select(sessionMuscleGroups)
+          ..where((g) => g.sessionId.isIn(sessionIds)))
+        .get();
+  }
+
   Future<int> insertSession(SessionsCompanion session) =>
       into(sessions).insert(session);
 
