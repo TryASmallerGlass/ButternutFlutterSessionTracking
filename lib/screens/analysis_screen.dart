@@ -69,7 +69,15 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   }
 
   String _csvEscape(String value) {
-    if (value.contains(',') || value.contains('"') || value.contains('\n')) {
+    // Neutralize leading characters spreadsheet apps interpret as formulas
+    // (=, +, -, @, tab, CR) to prevent CSV/formula injection from comments.
+    if (value.isNotEmpty && RegExp(r'^[=+\-@\t\r]').hasMatch(value)) {
+      value = "'$value";
+    }
+    if (value.contains(',') ||
+        value.contains('"') ||
+        value.contains('\n') ||
+        value.contains('\r')) {
       return '"${value.replaceAll('"', '""')}"';
     }
     return value;
