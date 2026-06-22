@@ -45,6 +45,14 @@ class AppDatabase extends _$AppDatabase {
       (select(sessions)..where((s) => s.sessionDateTime.isBiggerOrEqualValue(from)))
           .get();
 
+  Future<List<Session>> sessionsBetween(DateTime from, DateTime to) =>
+      (select(sessions)
+            ..where((s) =>
+                s.sessionDateTime.isBiggerOrEqualValue(from) &
+                s.sessionDateTime.isSmallerOrEqualValue(to))
+            ..orderBy([(s) => OrderingTerm.desc(s.sessionDateTime)]))
+          .get();
+
   Future<List<SessionMuscleGroup>> groupsForSessionIds(List<int> sessionIds) {
     if (sessionIds.isEmpty) return Future.value(const []);
     return (select(sessionMuscleGroups)

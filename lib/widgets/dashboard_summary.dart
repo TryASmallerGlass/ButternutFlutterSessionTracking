@@ -1,20 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../database/database.dart';
-
-class DashboardStats {
-  final int sessionCount;
-  final Map<MuscleGroup, double> avgHitsPerSession;
-  final double? avgCvDurationMinutes;
-  final int cvSessionCount;
-
-  DashboardStats({
-    required this.sessionCount,
-    required this.avgHitsPerSession,
-    required this.avgCvDurationMinutes,
-    required this.cvSessionCount,
-  });
-}
+import '../models/dashboard_stats.dart';
+import '../screens/analysis_screen.dart';
 
 class DashboardSummary extends StatefulWidget {
   final AppDatabase database;
@@ -58,46 +46,15 @@ class _DashboardSummaryState extends State<DashboardSummary> {
   Future<DashboardStats> _loadStats() async {
     final from = DateTime.now().subtract(Duration(days: _rangeDays));
     final sessions = await widget.database.sessionsSince(from);
-    final sessionIds = sessions.map((s) => s.id).toList();
-    final groups = await widget.database.groupsForSessionIds(sessionIds);
-
-    final hitTotals = <MuscleGroup, int>{};
-    for (final g in groups) {
-      final group = MuscleGroup.values.firstWhere((m) => m.name == g.muscleGroup);
-      hitTotals[group] = (hitTotals[group] ?? 0) + g.hitCount;
-    }
-
-    final sessionCount = sessions.length;
-    final avgHitsPerSession = {
-      for (final group in MuscleGroup.values)
-        group: sessionCount == 0 ? 0.0 : (hitTotals[group] ?? 0) / sessionCount,
-    };
-
-    final cvSessions = sessions.where((s) => s.cvDurationMinutes != null).toList();
-    final avgCv = cvSessions.isEmpty
-        ? null
-        : cvSessions.map((s) => s.cvDurationMinutes!).reduce((a, b) => a + b) /
-            cvSessions.length;
-
-    return DashboardStats(
-      sessionCount: sessionCount,
-      avgHitsPerSession: avgHitsPerSession,
-      avgCvDurationMinutes: avgCv,
-      cvSessionCount: cvSessions.length,
-    );
+    return DashboardStats.compute(widget.database, sessions);
   }
 
-  String _label(MuscleGroup group) {
-    switch (group) {
-      case MuscleGroup.front:
-        return 'Front';
-      case MuscleGroup.back:
-        return 'Back';
-      case MuscleGroup.legs:
-        return 'Legs';
-      case MuscleGroup.core:
-        return 'Core';
-    }
+  void _openAnalysis() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AnalysisScreen(database: widget.database),
+      ),
+    );
   }
 
   @override
@@ -149,7 +106,7 @@ class _DashboardSummaryState extends State<DashboardSummary> {
                       runSpacing: 4,
                       children: MuscleGroup.values
                           .map((g) => Text(
-                              '${_label(g)}: ${stats.avgHitsPerSession[g]!.toStringAsFixed(1)}'))
+                              '${muscleGroupLabel(g)}: ${stats.avgHitsPerSession[g]!.toStringAsFixed(1)}'))
                           .toList(),
                     ),
                     const SizedBox(height: 8),
@@ -162,6 +119,14 @@ class _DashboardSummaryState extends State<DashboardSummary> {
                   ],
                 );
               },
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _openAnalysis,
+                icon: const Icon(Icons.analytics_outlined),
+                label: const Text('Detail / Custom'),
+              ),
             ),
           ],
         ),
