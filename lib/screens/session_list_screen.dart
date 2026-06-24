@@ -89,6 +89,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
           DashboardSummary(
             database: widget.database,
             refreshToken: _dashboardRefreshToken,
+            onDataChanged: () => setState(_refresh),
           ),
           Expanded(
             child: FutureBuilder<List<Session>>(

@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.butternutapps.butternut_session_tracking"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

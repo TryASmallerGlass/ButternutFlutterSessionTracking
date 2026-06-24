@@ -7,11 +7,13 @@ import '../screens/analysis_screen.dart';
 class DashboardSummary extends StatefulWidget {
   final AppDatabase database;
   final int refreshToken;
+  final VoidCallback? onDataChanged;
 
   const DashboardSummary({
     super.key,
     required this.database,
     this.refreshToken = 0,
+    this.onDataChanged,
   });
 
   @override
@@ -49,12 +51,16 @@ class _DashboardSummaryState extends State<DashboardSummary> {
     return DashboardStats.compute(widget.database, sessions);
   }
 
-  void _openAnalysis() {
-    Navigator.of(context).push(
+  Future<void> _openAnalysis() async {
+    final dataChanged = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => AnalysisScreen(database: widget.database),
       ),
     );
+    if (dataChanged == true) {
+      setState(() => _statsFuture = _loadStats());
+      widget.onDataChanged?.call();
+    }
   }
 
   @override
@@ -111,9 +117,9 @@ class _DashboardSummaryState extends State<DashboardSummary> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      stats.avgCvDurationMinutes == null
-                          ? 'Avg CV duration: no cardio logged'
-                          : 'Avg CV duration: ${stats.avgCvDurationMinutes!.toStringAsFixed(1)} min '
+                      stats.cvSessionCount == 0
+                          ? 'Total CV time: no cardio logged'
+                          : 'Total CV time: ${stats.totalCvDurationMinutes} min '
                               '(${stats.cvSessionCount} session${stats.cvSessionCount == 1 ? '' : 's'})',
                     ),
                   ],

@@ -4,14 +4,14 @@ class DashboardStats {
   final int sessionCount;
   final Map<MuscleGroup, double> avgHitsPerSession;
   final Map<MuscleGroup, int> totalHits;
-  final double? avgCvDurationMinutes;
+  final int totalCvDurationMinutes;
   final int cvSessionCount;
 
   DashboardStats({
     required this.sessionCount,
     required this.avgHitsPerSession,
     required this.totalHits,
-    required this.avgCvDurationMinutes,
+    required this.totalCvDurationMinutes,
     required this.cvSessionCount,
   });
 
@@ -33,16 +33,15 @@ class DashboardStats {
     };
 
     final cvSessions = sessions.where((s) => s.cvDurationMinutes != null).toList();
-    final avgCv = cvSessions.isEmpty
-        ? null
-        : cvSessions.map((s) => s.cvDurationMinutes!).reduce((a, b) => a + b) /
-            cvSessions.length;
+    final totalCv = cvSessions.isEmpty
+        ? 0
+        : cvSessions.map((s) => s.cvDurationMinutes!).reduce((a, b) => a + b);
 
     return DashboardStats(
       sessionCount: sessionCount,
       avgHitsPerSession: avgHitsPerSession,
       totalHits: {for (final group in MuscleGroup.values) group: hitTotals[group] ?? 0},
-      avgCvDurationMinutes: avgCv,
+      totalCvDurationMinutes: totalCv,
       cvSessionCount: cvSessions.length,
     );
   }
